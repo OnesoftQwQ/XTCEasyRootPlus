@@ -1,4 +1,5 @@
 import os
+import time
 from rich.console import Console
 from rich.text import Text
 from time import sleep
@@ -86,17 +87,17 @@ while True:
 
     if choice.name == '1.一键Root':
         console.rule('免责声明',characters='=')
-        print('''如您使用[red]Sky iMoo[/red]相关文件(包括但不限于任意出自本群文件或其他来源的Magisk模块，root文件等)对手表进行了ROOT或安装非官方商城应用，即代表您默认同意本《免责声明》
-1.使用Sky iMoo提供的文件后，您的设备将不再为原厂固件，可能[red]无法正常使用[/red]由广东小天才科技有限公司提供的服务，且小天才无需无理由恢复这些功能。
-2.使用Sky iMoo提供的文件后导致的家长端等功能出现[red]任何异常[/red](包括但不限于文件错误)，Sky iMoo及管理组无需承担任何责任。
-3.您需要[red]自觉[/red]使用网络，如您因沉迷于网络导致身心健康受损或学习成绩下降等，Sky iMoo及管理组无需承担任何责任。
-4.在刷入非官方固件后您的设备可能会[red]失去保修[/red]，尽管您的设备可以恢复到官方固件。
-5.您对手表进行解除第三方软件安装限制之操作属于您的[red]自愿[/red]行为，Sky iMoo及管理组并没有主动要求他人进行ROOT，解除安装限制。
-6.Sky iMoo并[red]不提供 手表强制解绑 服务[/red]，如您捡拾他人的手表，请自觉联系当地110归还失主。手表解绑属于非法行为，请归还失主。而不要尝试通过ROOT等刷机手段解除挂失锁。
+        print('''如您使用[red]Sky iMoo[red]相关文件(包括但不限于任意出自本群文件或其他来源的Magisk模块，root文件等)对手表进行了ROOT或安装非官方商城应用，即代表您默认同意本《免责声明》
+1.使用Sky iMoo提供的文件后，您的设备将不再为原厂固件，可能[red]无法正常使用[red]由广东小天才科技有限公司提供的服务，且小天才无需无理由恢复这些功能。
+2.使用Sky iMoo提供的文件后导致的家长端等功能出现[red]任何异常[red](包括但不限于文件错误)，Sky iMoo及管理组无需承担任何责任。
+3.您需要[red]自觉[red]使用网络，如您因沉迷于网络导致身心健康受损或学习成绩下降等，Sky iMoo及管理组无需承担任何责任。
+4.在刷入非官方固件后您的设备可能会[red]失去保修[red]，尽管您的设备可以恢复到官方固件。
+5.您对手表进行解除第三方软件安装限制之操作属于您的[red]自愿[red]行为，Sky iMoo及管理组并没有主动要求他人进行ROOT，解除安装限制。
+6.Sky iMoo并[red]不提供 手表强制解绑 服务[red]，如您捡拾他人的手表，请自觉联系当地110归还失主。手表解绑属于非法行为，请归还失主。而不要尝试通过ROOT等刷机手段解除挂失锁。
 7.Sky iMoo只提供于ROOT有关的文件，Sky iMoo及管理组无需承担任何责任。
 8.如果您帮助他人或教唆他人ROOT或解除第三方软件安装限制，对他人手表进行一切可能有损坏的操作需[red]由机主本人同意[red]并由机主自行操作，责任由机主自行承担。
-9.[red]禁止恶意损坏他人财产[/red]，如您在ROOT或解除第三方软件安装限制后恶意使用他人信息未经授权操作他人账号而导致的他人出现任何财产损失，Sky iMoo及管理组无需承担任何责任，责任由您自行承担。
-10.当《免责声明》发生任何变动时均认为您[red]默认同意[/red]修改后的内容。''')
+9.[red]禁止恶意损坏他人财产[red]，如您在ROOT或解除第三方软件安装限制后恶意使用他人信息未经授权操作他人账号而导致的他人出现任何财产损失，Sky iMoo及管理组无需承担任何责任，责任由您自行承担。
+10.当《免责声明》发生任何变动时均认为您默认同意修改后的内容。''')
         console.rule('免责声明',characters='=')
         confirm = noneprompt.ConfirmPrompt('你是否已阅读并同意本《免责声明》',default_choice=False).prompt()
         if not confirm:
@@ -110,7 +111,7 @@ while True:
         status.start()
         print('请在手表上打开并用数据线将手表连接至电脑')
         adb.wait_for_connect()
-
+        
         console.log('设备已连接')
         status.update('获取设备信息')
         console.log('获取设备信息')
@@ -593,16 +594,25 @@ while True:
             console.log('连接成功!')
             status.stop()
             input('恭喜你,Root成功!按回车返回主界面')
-    elif choice.name== '3.工具箱':
-            choice = noneprompt.ListPrompt(
+    elif choice.name == '3.工具箱':
+        os.system('cls')
+        box = noneprompt.ListPrompt(
             '请选择功能',
             [
-                noneprompt.Choice('1.adb安装应用'),
-                noneprompt.Choice('2.安装magisk模块'),
-                noneprompt.Choice('3.打开充电可用'),
-                noneprompt.Choice('4.')
+                noneprompt.Choice('1.打开充电可用'),
+                noneprompt.Choice('2.222'),
+                noneprompt.Choice('3.333'),
+                noneprompt.Choice('4.2233')
             ]
         ).prompt()
+        print(box.name)
+        if box.name == '1.打开充电可用':
+            #tools.ADB.wait_for_connect()
+            os.system("adb wait-for-device shell su -c setprop persist.sys.charge.usable true")
+            print('[green][INFO][/green]已打开充电可用')
+            status.stop()
+            input('按下回车返回主界面')
+            
     elif choice.name == '4.关于':
         os.system('cls')
         tools.print_logo(version)

@@ -13,7 +13,7 @@ import re
 import shutil
 import rich
 import rich.status
-from patch_boot import patch
+#from patch_boot import patch
 
 def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
