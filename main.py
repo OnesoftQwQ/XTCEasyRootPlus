@@ -599,8 +599,9 @@ while True:
         ).prompt()
         print(box.name)
         if box.name == '1.打开充电可用':
-            #tools.ADB.wait_for_connect()
-            os.system("adb wait-for-device shell su -c setprop persist.sys.charge.usable true")
+            adb = tools.ADB('bin/adb.exe')
+            adb.wait_for_connect()
+            #os.system("adb wait-for-device shell su -c setprop persist.sys.charge.usable true")
             print('[green][INFO][/green]已打开充电可用')
             status.stop()
             input('按下回车返回主界面')
