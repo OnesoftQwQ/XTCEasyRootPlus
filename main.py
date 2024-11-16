@@ -1,5 +1,6 @@
 import os
 import time
+import easygui
 from rich.console import Console
 from rich.text import Text
 from time import sleep
@@ -16,6 +17,7 @@ from rich.console import Console
 from rich.table import Column,Table
 import shutil
 import threading
+import tkinter
 
 version = [0,2,'b']
 
@@ -592,9 +594,9 @@ while True:
             '请选择功能',
             [
                 noneprompt.Choice('1.打开充电可用'),
-                noneprompt.Choice('2.222'),
-                noneprompt.Choice('3.333'),
-                noneprompt.Choice('4.2233')
+                noneprompt.Choice('2.安装应用'),
+                noneprompt.Choice('3.安装Magisk模块'),
+                #noneprompt.Choice('4.2233')
             ]
         ).prompt()
         print(box.name)
@@ -605,7 +607,58 @@ while True:
             print('[green][INFO][/green]已打开充电可用')
             status.stop()
             input('按下回车返回主界面')
-            
+        if box.name == '2.安装应用':
+            adb = tools.ADB('bin/adb.exe')
+            #adb.wait_for_connect()
+            apk_path = tools.select_file()
+            adb.wait_for_connect()
+            if apk_path == None:
+                print('\n[red]未选择文件![/red]')
+                time.sleep(1)
+            else :
+                adb.install(apk_path)
+            status.stop()
+            input('应用安装完成,按回车返回主界面')
+        if box.name == '3.安装Magisk模块':
+            module_type = noneprompt.ListPrompt(
+                '请选择模块模块(暂只支持810安装)',
+                [
+                    noneprompt.Choice('1.自定义模块'),
+                    noneprompt.Choice('2.CaremeOsPro'),
+                    noneprompt.Choice('3.Natrue Os'),
+                ]
+            ).prompt()
+            if module_type.name == '1.自定义模块':
+                adb = tools.ADB('bin/adb.exe')
+                module_path = tools.select_file()
+                adb.wait_for_connect()
+                if module_path == None:
+                    print('\n[red]未选择文件![/red]')
+                else :
+                    adb.push(module_path,'/sdcard/')
+                    adb.shell('su -c magisk --install-module /sdcard/'+module_path.split('/')[-1])
+                status.stop()
+                input('模块安装完成,按回车返回主界面')
+            if module_type.name == '2.CaremeOsPro':
+                adb = tools.ADB('bin/adb.exe')
+                #下载链接后面会替换为Onesoft的服务器的链接
+                tools.download_file('https://vip.123pan.cn/1814215835/xtc_root/caremeospro.zip','tmp/caremeospro.zip')
+                adb.wait_for_connect()
+                adb.push('tmp/caremeospro.zip','/sdcard/')
+                adb.shell('su -c magisk --install-module /sdcard/caremeospro.zip')
+                #adb.shell('rm -rf /sdcard/caremeospro.zip')
+                status.stop()
+                input('CaremeOsPro模块安装完成,按回车返回主界面')
+            if module_type.name == '3.Natrue Os':
+                adb = tools.ADB('bin/adb.exe')
+                #下载链接后面会替换为Onesoft的服务器的链接
+                tools.download_file('https://vip.123pan.cn/1814215835/xtc_root/natureos.zip','tmp/natureos.zip')
+                adb.wait_for_connect()
+                adb.push('tmp/natureos.zip','/sdcard/')
+                adb.shell('su -c magisk --install-module /sdcard/natureos.zip')
+                #adb.shell('rm -rf /sdcard/natureos.zip')
+                status.stop()
+                input('Natrue Os模块安装完成,按回车返回主界面')
     elif choice.name == '4.关于':
         os.system('cls')
         tools.print_logo(version)

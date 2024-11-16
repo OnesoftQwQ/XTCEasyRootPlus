@@ -13,7 +13,8 @@ import re
 import shutil
 import rich
 import rich.status
-#from patch_boot import patch
+import easygui
+from patch_boot import patch
 
 def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
@@ -395,6 +396,16 @@ SHA1={sha1}''')
         if os.path.exists(i):
             os.remove(i)
     
+
+
+def select_file():
+    tmp_path = easygui.fileopenbox()
+    if tmp_path:
+        print(f"您选择了文件: {tmp_path}")
+        return tmp_path
+    else:
+        print("您没有选择任何文件")
+        return None
 
 def iferror(output,title,status: rich.status.Status,*,mode='skip',qt: QT = None):
     if not output == 'success':
