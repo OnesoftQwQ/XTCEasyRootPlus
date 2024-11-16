@@ -652,7 +652,9 @@ while True:
             if module_type.name == '3.Natrue Os':
                 adb = tools.ADB('bin/adb.exe')
                 #下载链接后面会替换为Onesoft的服务器的链接
-                tools.download_file('https://vip.123pan.cn/1814215835/xtc_root/natureos.zip','tmp/natureos.zip')
+                #tools.download_file('https://vip.123pan.cn/1814215835/xtc_root/natureos.zip','tmp/natureos.zip')
+                #69的链接
+                tools.download_file('https://vip.123pan.cn/1834274205/%E6%A8%A1%E5%9D%97/natureos.zip','tmp/natureos.zip')
                 adb.wait_for_connect()
                 adb.push('tmp/natureos.zip','/sdcard/')
                 adb.shell('su -c magisk --install-module /sdcard/natureos.zip')
