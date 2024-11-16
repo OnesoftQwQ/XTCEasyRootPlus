@@ -1,6 +1,5 @@
 import os
 import time
-import easygui
 from rich.console import Console
 from rich.text import Text
 from time import sleep
@@ -17,9 +16,8 @@ from rich.console import Console
 from rich.table import Column,Table
 import shutil
 import threading
-import tkinter
 
-version = [0,2,'b']
+version = [0,3,'b']
 
 os.system(f'title XTCEasyRootPlus v{version[0]}.{version[1]}')
 console = Console()
@@ -49,8 +47,8 @@ status.update('正在检查更新')
 status.start()
 console.log('检查最新版本')
 try: #尝试获取版本文件
-    r = requests.get('https://xtc-files.oss.onesoft.top/easyrootplus/version.json')   #获取版本信息
-    read = json.loads(r.content)
+    with requests.get('https://xtc-files.oss.onesoft.top/easyrootplus/version.json') as r:   #获取版本信息
+        read = json.loads(r.content)
     latest_version = read
     if latest_version[0] >= version[0] and latest_version[1] > version[1]:
         console.log(f'发现新版本:{latest_version[0]}.{latest_version[1]}')
@@ -67,6 +65,17 @@ except requests.ConnectionError:   #捕捉下载失败错误
 console.log('当前版本为最新!')
 sleep(1)
 
+if not os.path.exists('driver'):
+    console.log('初次使用,自动安装驱动!')
+    status.update('安装驱动')
+    console.log('安装Qualcomm驱动')
+    os.system('bin\\qualcommdriver.msi /quiet')
+    console.log('安装Fastboot驱动')
+    tools.run_wait('bin/fastbootdriver/DPInst_x64.exe /Q')
+    console.log('安装驱动完毕!')
+    open('driver','w').close()
+    sleep(1)
+
 while True:
     #清屏并停止状态指示
     status.stop()
@@ -80,7 +89,7 @@ while True:
         '请选择功能',
         [
             noneprompt.Choice('1.一键Root'),
-            noneprompt.Choice('2.超级恢复(救砖/降级)'),
+            noneprompt.Choice('2.超级恢复(救砖/降级/恢复原版系统)'),
             noneprompt.Choice('3.工具箱'),
             noneprompt.Choice('4.关于')
         ]
@@ -89,7 +98,7 @@ while True:
 
     if choice.name == '1.一键Root':
         console.rule('免责声明',characters='=')
-        print(''''1.所有已经解除第三方软件安装限制的手表都可以恢复到解除限制前之状态。
+        print('''1.所有已经解除第三方软件安装限制的手表都可以恢复到解除限制前之状态。
 2.解除第三方软件安装限制后，您的手表可以无限制地安装第三方软件，需要家长加强对孩子的监管力度，避免孩子沉迷网络，影响学习；手表自带的功能不受影响。
 3.您对手表进行解除第三方软件安装限制之操作属于您的自愿行为，若在操作过程中由于操作不当等自身原因，导致出现手表无法正常使用等异常情况，以及解除软件安装限制之后产生的一切后果将由您本人承担！''')
         console.rule('免责声明',characters='=')
@@ -105,7 +114,7 @@ while True:
         status.start()
         print('请在手表上打开并用数据线将手表连接至电脑')
         adb.wait_for_connect()
-        
+
         console.log('设备已连接')
         status.update('获取设备信息')
         console.log('获取设备信息')
@@ -129,17 +138,18 @@ while True:
 
         model = tools.xtc_models[info['innermodel']]
 
-        choice = noneprompt.ListPrompt(
-            '请选择想要的Magisk版本',
-            choices=[
-                noneprompt.Choice('1.Magisk25200'),
-                noneprompt.Choice('2.MagiskDelta25210')
-            ],
-        ).prompt()
-        if choice.name == '1.Magisk25200':
-            magisk = '25200'
-        elif choice.name == '2.MagiskDelta25210':
-            magisk = '25210'
+        if info['version_of_android'] == '8.1.0':
+            choice = noneprompt.ListPrompt(
+                '请选择想要的Magisk版本',
+                choices=[
+                    noneprompt.Choice('1.Magisk25200'),
+                    noneprompt.Choice('2.MagiskDelta25210')
+                ],
+            ).prompt()
+            if choice.name == '1.Magisk25200':
+                magisk = '25200'
+            elif choice.name == '2.MagiskDelta25210':
+                magisk = '25210'
 
         if not os.path.exists(f'data/{model}'):
             console.log('下载文件')
@@ -150,10 +160,11 @@ while True:
             status.update('解压文件')
             tools.extract_all(f'tmp/{model}.zip',f'data/{model}/')
         
-        if magisk == '25200':
-            tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
-        elif magisk == '25210':
-            tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
+        if info['version_of_android'] == '8.1.0':
+            if magisk == '25200':
+                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/1userdata.img','tmp/userdata.img')
+            elif magisk == '25210':
+                tools.download_file('https://xtc-files.oss.onesoft.top/easyrootplus/2userdata.img','tmp/userdata.img')
         
         status.stop()
         
@@ -588,6 +599,105 @@ while True:
             console.log('连接成功!')
             status.stop()
             input('恭喜你,Root成功!按回车返回主界面')
+
+    elif choice.name == '2.超级恢复(救砖/降级/恢复原版系统)':
+        adb = tools.ADB('bin/adb.exe')
+        
+        status.update('获取超级恢复列表')
+        status.start()
+        console.log('获取超级恢复列表')
+        with requests.get('https://xtc-files.oss.onesoft.top/easyrootplus/superrecovery.json') as r:
+            superrecovery : dict = json.loads(r.content)
+        
+        console.log('获取成功!')
+
+        console.log('尝试自动识别机型')
+        status.update('获取机型')
+        if adb.is_connect():
+            info = adb.get_info()
+            model = tools.xtc_models[info['innermodel']]
+            console.log('获取成功')
+            status.stop
+        else:
+            console.log('获取失败,进入手动选择')
+            status.stop()
+            choice_list = []
+            for i,x in enumerate(superrecovery.keys()):
+                choice_list.append(noneprompt.Choice(f'{i+1}.{x}'))
+            choice = noneprompt.ListPrompt('请选择你的机型',choice_list).prompt()
+            model = choice.name.split('.')[-1]
+        
+        if not len(superrecovery[model]) == 1:
+            choice_list = []
+            for i in superrecovery[model].keys():
+                choice_list.append(noneprompt.Choice(i))
+            choice = noneprompt.ListPrompt('请选择超级恢复版本',choice_list).prompt()
+            sr_version = choice.name
+        else:
+            sr_version = list(superrecovery[model].keys())[0]
+        
+        if not os.path.exists(f'data/superrecovery/{model}_{sr_version}/'):
+            status.stop()
+            console.log('下载文件')
+            # tools.download_file(superrecovery[model][sr_version],'tmp/superrecovery.zip')
+            console.log('解压文件')
+            status.update('解压文件')
+            status.start()
+            if not os.path.exists('data/superrecovery/'):
+                os.mkdir('data/superrecovery/')
+            os.mkdir(f'data/superrecovery/{model}_{sr_version}/')
+            tools.extract_all('tmp/superrecovery.zip',f'data/superrecovery/{model}_{sr_version}/')
+
+        if model in ('Z1S','Z1y','Z2','Z3','Z5A','Z5Pro','Z5q'):
+            fh_loader = 'fh_loader.exe'
+        elif model == 'Z6':
+            if sr_version == '1.4.6':
+                fh_loader = 'fh_loader.exe'
+            else:
+                fh_loader = 'xtcfh_loader.exe'
+        else:
+            fh_loader = 'xtcfh_loader.exe'
+
+        status.update('等待连接')
+        status.start()
+        console.log('等待连接')
+        while True:
+            if adb.is_connect():
+                adb.adb('reboot edl')
+                break
+            if not tools.check_edl() is False:
+                break
+        port = tools.wait_for_edl()
+        console.log('连接成功!')
+
+        qt = tools.QT('bin/QSaharaServer.exe',f'bin/{fh_loader}',port,f'data/superrecovery/{model}_{sr_version}/mbn.mbn')
+
+        console.log('进入sahara模式')
+        status.update('进入sahara模式')
+        tools.iferror(qt.intosahara(),'进入sahara模式',status,mode='stop')
+
+        sendxml = ''
+        sendxml_list = []
+        for i in os.listdir(f'data/superrecovery/{model}_{sr_version}/'):
+            if i[:5] == 'patch' and i[-3:] == 'xml':
+                sendxml_list.append(i)
+            elif i[:10] == 'rawprogram' and i[-3:] == 'xml':
+                sendxml_list.append(i)
+        if len(sendxml_list) == 2:
+            sendxml_list = ['rawprogram0.xml']
+            sendxml = 'rawprogram0.xml'
+        else:
+            for i in sendxml_list:
+                sendxml = sendxml + i + ','
+        
+
+        console.log('开始超恢')
+        console.log('提示: 此过程耗时较长,可能需要1-2分钟,请耐心等待')
+        status.update('超级恢复')
+        tools.iferror(qt.fh_loader_err(rf'--port=\\.\COM{port} --sendxml={sendxml} --search_path=data/superrecovery/{model}_{sr_version} --noprompt --showpercentagecomplete --memoryname=eMMC --setactivepartition=0 --reset'),'超级恢复',status,mode='exit9008',qt=qt)
+
+        status.stop()
+        input('超恢成功!按下回车键回到主界面')
     elif choice.name == '3.工具箱':
         os.system('cls')
         box = noneprompt.ListPrompt(
@@ -664,7 +774,7 @@ while True:
     elif choice.name == '4.关于':
         os.system('cls')
         tools.print_logo(version)
-
+        print('')
         about = '''XTCEasyRootPlus时一个使用Python制作的小天才电话手表一键Root程序
 本项目以GPL协议开源在Github:https://www.github.com/OnesoftQwQ/XTCEasyRootPlus
 
@@ -672,12 +782,11 @@ while True:
     [red]花火玩偶[/red] 和 [blue]Onesoft[/blue]
 
 特别鸣谢:
-    早茶光: 制作了XTCEasyRoot,xtcpatch,810和711的adbd,多个版本的改版桌面,并且为我解答了许多问题,本项目的逻辑基本上是参考[strike](抄)[/strike]的XTCEasyRoot
-    huanli233: 制作了部分改版桌面,notice,systemplus,weichatpro2
-'''
+    早茶光: 制作了XTCEasyRoot,xtcpatch,810和711的adbd,多个版本的改版桌面,并且为我解答了许多问题,[white]本项目的逻辑基本上是参考[/white][strike](抄)[/strike]的XTCEasyRoot
+    huanli233: 制作了部分改版桌面,notice,systemplus,weichatpro2'''
         
         for i in about.splitlines():
             print(i)
             sleep(0.5)
 
-        input('按回车回到主界面......')
+        input('\n按回车回到主界面......')

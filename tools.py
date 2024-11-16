@@ -13,23 +13,23 @@ import re
 import shutil
 import rich
 import rich.status
-import easygui
 from patch_boot import patch
 
 def run_wait(args: str,returncode=False):
     with open('log.log','a') as f:
         f.write(f'>>>{args}\n')
     p = subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    p.wait()
+    write = ''
+    while p.poll() is None:
+        p.wait(5)
+        with open('log.log','a') as f:
+            write = p.stdout.read().decode().replace(write,'')
+            f.write(f)
     stdout = p.stdout.read().decode()
     stderr = p.stderr.read().decode()
     if returncode:
-        with open('log.log','a') as f:
-            f.write(f'returncode {p.returncode}\n\n')
         return p.returncode
     else:
-        with open('log.log','a') as f:
-            f.write(f'{stdout}\n{stderr}\n')
         return stdout,stderr
 
 def clear_line():
@@ -42,6 +42,14 @@ def exit_after_enter():
     input('')
     sys.exit()
 
+def select_file():
+    tmp_path = easygui.fileopenbox()
+    if tmp_path:
+        print(f"您选择了文件: {tmp_path}")
+        return tmp_path
+    else:
+        print("您没有选择任何文件")
+        return None
 def download_file(url: str, filename: str = '', progress: bool = True):
     if filename == '':
         filename = parse.unquote(url.split('/')[-1].split('&')[0])
@@ -189,7 +197,7 @@ class QT():
         else:
             return 'success'
 
-    def reboot2edl(self,adb):
+    def reboot2edl(self,adb: ADB):
         adb.adb('reboot edl')
         self.intosahara()
 
@@ -396,16 +404,6 @@ SHA1={sha1}''')
         if os.path.exists(i):
             os.remove(i)
     
-
-
-def select_file():
-    tmp_path = easygui.fileopenbox()
-    if tmp_path:
-        print(f"您选择了文件: {tmp_path}")
-        return tmp_path
-    else:
-        print("您没有选择任何文件")
-        return None
 
 def iferror(output,title,status: rich.status.Status,*,mode='skip',qt: QT = None):
     if not output == 'success':
